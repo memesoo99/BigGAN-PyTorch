@@ -1,1 +1,9 @@
 
+weights/test/D_optim.pth
+weights/test/D.pth
+weights/test/G_ema.pth
+weights/test/G_optim.pth
+weights/test/G.pth
+weights/test/state_dict.pth
+data
+.vscode/launch.json

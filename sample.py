@@ -58,6 +58,7 @@ def run(config):
   model = __import__(config['model'])
   experiment_name = (config['experiment_name'] if config['experiment_name']
                        else utils.name_from_config(config))
+  experiment_name = "test"
   print('Experiment name is %s' % experiment_name)
   
   G = model.Generator(**config).cuda()
