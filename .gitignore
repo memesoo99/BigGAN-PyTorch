@@ -7,3 +7,10 @@ weights/test/G.pth
 weights/test/state_dict.pth
 data
 .vscode/launch.json
+__pycache__/BigGAN.cpython-37.pyc
+__pycache__/layers.cpython-37.pyc
+__pycache__/losses.cpython-37.pyc
+sync_batchnorm/__pycache__/__init__.cpython-37.pyc
+sync_batchnorm/__pycache__/batchnorm.cpython-37.pyc
+sync_batchnorm/__pycache__/comm.cpython-37.pyc
+sync_batchnorm/__pycache__/replicate.cpython-37.pyc
