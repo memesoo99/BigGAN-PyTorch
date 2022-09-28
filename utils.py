@@ -251,7 +251,7 @@ def prepare_parser():
     '--data_root', type=str, default='data',
     help='Default location where data is stored (default: %(default)s)')
   parser.add_argument(
-    '--weights_root', type=str, default='weights',
+    '--weights_root', type=str, default='/home/genniferk/prior_test/100k',
     help='Default location to store weights (default: %(default)s)')
   parser.add_argument(
     '--logs_root', type=str, default='logs',
@@ -268,7 +268,7 @@ def prepare_parser():
     help='Suffix for experiment name for loading weights for sampling '
          '(consider "best0") (default: %(default)s)')
   parser.add_argument(
-    '--experiment_name', type=str, default='',
+    '--experiment_name', type=str, default='256x8',
     help='Optionally override the automatic experiment naming with this arg. '
          '(default: %(default)s)')
   parser.add_argument(
@@ -336,7 +336,7 @@ def prepare_parser():
     help='Suffix for which weights to load (e.g. best0, copy0) '
          '(default: %(default)s)')
   parser.add_argument(
-    '--resume', action='store_true', default=False,
+    '--resume', action='store_true', default=True,
     help='Resume training? (default: %(default)s)')
   
   ### Log stuff ###
@@ -709,34 +709,34 @@ def save_weights(G, D, state_dict, weights_root, experiment_name,
 
 
 # Load a model's weights, optimizer, and the state_dict
-def load_weights(G, D, state_dict, weights_root, experiment_name, 
-                 name_suffix=None, G_ema=None, strict=True, load_optim=True):
+def load_weights(G, D, state_dict, weights_root, experiment_name,
+                 name_suffix=None, G_ema=None, strict=True, skip_load_optim=False):
   root = '/'.join([weights_root, experiment_name])
   if name_suffix:
     print('Loading %s weights from %s...' % (name_suffix, root))
   else:
     print('Loading weights from %s...' % root)
   if G is not None:
-    G.load_state_dict(
-      torch.load('%s/%s.pth' % (root, join_strings('_', ['G', name_suffix]))),
-      strict=strict)
-    if load_optim:
+    pretrained_model = torch.load('%s/%s.pth' % (root, join_strings('_', ['G', name_suffix])))
+    pretrained_model = {k: v for k, v in pretrained_model.items() if (k in G.state_dict()) and (G.state_dict()[k].shape == pretrained_model[k].shape)}
+    G.load_state_dict(pretrained_model, strict=strict)
+    if not skip_load_optim:
       G.optim.load_state_dict(
         torch.load('%s/%s.pth' % (root, join_strings('_', ['G_optim', name_suffix]))))
   if D is not None:
-    D.load_state_dict(
-      torch.load('%s/%s.pth' % (root, join_strings('_', ['D', name_suffix]))),
-      strict=strict)
-    if load_optim:
+    pretrained_model = torch.load('%s/%s.pth' % (root, join_strings('_', ['D', name_suffix])))
+    pretrained_model = {k: v for k, v in pretrained_model.items() if (k in D.state_dict()) and (D.state_dict()[k].shape == pretrained_model[k].shape)}
+    D.load_state_dict(pretrained_model, strict=strict)
+    if not skip_load_optim:
       D.optim.load_state_dict(
         torch.load('%s/%s.pth' % (root, join_strings('_', ['D_optim', name_suffix]))))
-  # Load state dict
+  # Load state dict  
   for item in state_dict:
     state_dict[item] = torch.load('%s/%s.pth' % (root, join_strings('_', ['state_dict', name_suffix])))[item]
   if G_ema is not None:
-    G_ema.load_state_dict(
-      torch.load('%s/%s.pth' % (root, join_strings('_', ['G_ema', name_suffix]))),
-      strict=strict)
+    pretrained_model = torch.load('%s/%s.pth' % (root, join_strings('_', ['G_ema', name_suffix])))
+    pretrained_model = {k: v for k, v in pretrained_model.items() if (k in G_ema.state_dict()) and (G_ema.state_dict()[k].shape == pretrained_model[k].shape)}
+    G_ema.load_state_dict(pretrained_model, strict=strict)
 
 
 ''' MetricsLogger originally stolen from VoxNet source code.
@@ -900,6 +900,7 @@ def sample_sheet(G, classes_per_sheet, num_classes, samples_per_class, parallel,
     # This line should properly unroll the images
     out_ims = torch.stack(ims, 1).view(-1, ims[0].shape[1], ims[0].shape[2], 
                                        ims[0].shape[3]).data.float().cpu()
+    out_ims = torch.from_numpy(out_ims.numpy())                                      
     # The path for the samples
     image_filename = '%s/%s/%d/samples%d.jpg' % (samples_root, experiment_name, 
                                                  folder_number, i)
